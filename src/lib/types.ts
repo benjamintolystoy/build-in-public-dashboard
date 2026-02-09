@@ -65,11 +65,19 @@ export type PromotedData = {
   total_impressions_from_promoted: number;
 };
 
+export type JournalEntry = {
+  id: string;
+  content: string;
+  tags: string[];
+  created_at: string;
+};
+
 export type DashboardData = {
   engagement: EngagementData;
   interactions: Interaction[];
   influencers: InfluencerData;
   promoted: PromotedData;
+  journal: JournalEntry[];
   synced_at: string;
 };
 

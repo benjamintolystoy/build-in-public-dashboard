@@ -29,6 +29,7 @@ export function getDemoData(): DashboardData {
       last_check: '2026-02-09T12:00:00Z',
     },
     promoted: { promoted_tweets: [], evaluations: [], budget_spent: 0, total_impressions_from_promoted: 0 },
+    journal: [],
     synced_at: '2026-02-09T12:00:00Z',
   };
 }
