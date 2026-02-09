@@ -11,9 +11,10 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const content = (body.content ?? '').trim();
+    const images: string[] = Array.isArray(body.images) ? body.images : [];
 
-    if (!content) {
-      return NextResponse.json({ error: 'content is required' }, { status: 400 });
+    if (!content && images.length === 0) {
+      return NextResponse.json({ error: 'content or images required' }, { status: 400 });
     }
 
     const tags: string[] = Array.isArray(body.tags) ? body.tags : extractTags(content);
@@ -21,6 +22,7 @@ export async function POST(request: Request) {
     const entry: JournalEntry = {
       id: `j_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       content,
+      images,
       tags,
       created_at: new Date().toISOString(),
     };

@@ -68,6 +68,7 @@ export type PromotedData = {
 export type JournalEntry = {
   id: string;
   content: string;
+  images: string[];
   tags: string[];
   created_at: string;
 };
