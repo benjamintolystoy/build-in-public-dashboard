@@ -1,11 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
 import { DashboardData } from '@/lib/types';
 import { fetchDashboardData } from '@/lib/api';
 import TweetCard from '@/components/TweetCard';
-
-const EngagementChart = dynamic(() => import('@/components/EngagementChart'), { ssr: false });
+import EngagementChart from '@/components/EngagementChart';
 
 export default function TweetsPage() {
   const [data, setData] = useState<DashboardData | null>(null);

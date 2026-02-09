@@ -1,13 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
 import { DashboardData } from '@/lib/types';
 import { fetchDashboardData } from '@/lib/api';
 import StatCard from '@/components/StatCard';
+import StyleChart from '@/components/StyleChart';
+import EngagementChart from '@/components/EngagementChart';
 import InteractionFeed from '@/components/InteractionFeed';
-
-const StyleChart = dynamic(() => import('@/components/StyleChart'), { ssr: false });
-const EngagementChart = dynamic(() => import('@/components/EngagementChart'), { ssr: false });
 
 export default function EngagementPage() {
   const [data, setData] = useState<DashboardData | null>(null);
