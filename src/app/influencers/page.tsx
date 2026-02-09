@@ -17,6 +17,7 @@ type LocalItem = {
   status: 'pending' | 'posting' | 'done' | 'skipped' | 'error';
   error_message?: string;
   created_at: string;
+  metrics?: { likes: number; replies: number; retweets: number };
 };
 
 type ImportedItem = {
@@ -28,6 +29,7 @@ type ImportedItem = {
   tweet_id: string;
   suggestions: string[];
   created_at: string;
+  metrics?: { likes: number; replies: number; retweets: number };
 };
 
 const QUEUE_KEY = 'engage_queue_v2';
@@ -475,18 +477,24 @@ export default function EngagePage() {
 type XApiBadgeProps = { configured: boolean | null };
 
 function XApiBadge({ configured }: XApiBadgeProps) {
-  if (configured === null) return null;
-
   return (
-    <div
-      className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${
-        configured
-          ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-          : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
-      }`}
-    >
-      <span className={`w-1.5 h-1.5 rounded-full ${configured ? 'bg-green-400' : 'bg-yellow-400'}`} />
-      {configured ? 'X API connectée' : 'X API non configurée'}
+    <div className="flex flex-col items-end gap-1">
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20">
+        <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+        Scraping actif
+      </div>
+      {configured !== null && (
+        <div
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${
+            configured
+              ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+              : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+          }`}
+        >
+          <span className={`w-1.5 h-1.5 rounded-full ${configured ? 'bg-green-400' : 'bg-yellow-400'}`} />
+          {configured ? 'Auto-post actif' : 'Auto-post off (X API)'}
+        </div>
+      )}
     </div>
   );
 }
@@ -530,6 +538,13 @@ function QueueCard({ item, xConfigured, onPost, onCopy, onNext, onSkip, onEdit, 
           )}
         </div>
         <p className="text-sm text-gray-300 leading-relaxed">{item.tweet_text}</p>
+        {item.metrics && (
+          <div className="flex items-center gap-4 mt-2">
+            <span className="text-[10px] text-gray-600">{item.metrics.likes} likes</span>
+            <span className="text-[10px] text-gray-600">{item.metrics.retweets} RT</span>
+            <span className="text-[10px] text-gray-600">{item.metrics.replies} replies</span>
+          </div>
+        )}
       </div>
 
       {/* Editable reply */}

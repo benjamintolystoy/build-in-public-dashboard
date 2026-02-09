@@ -1,6 +1,37 @@
 import { NextResponse } from 'next/server';
-import { fetchUserTimeline, isXApiConfigured } from '@/lib/twitter';
 import { generateReplies } from '@/lib/engage-engine';
+
+// ── Syndication scraper (free, no auth) ──
+
+type SyndicationTweet = {
+  id_str: string;
+  text: string;
+  created_at: string;
+  favorite_count: number;
+  reply_count: number;
+  retweet_count: number;
+  user: {
+    name: string;
+    screen_name: string;
+  };
+};
+
+type SyndicationEntry = {
+  type: string;
+  content: {
+    tweet: SyndicationTweet;
+  };
+};
+
+type SyndicationData = {
+  props: {
+    pageProps: {
+      timeline: {
+        entries: SyndicationEntry[];
+      };
+    };
+  };
+};
 
 type FetchedItem = {
   id: string;
@@ -11,25 +42,83 @@ type FetchedItem = {
   tweet_id: string;
   suggestions: string[];
   created_at: string;
+  metrics: {
+    likes: number;
+    replies: number;
+    retweets: number;
+  };
 };
 
-export async function POST(request: Request) {
-  if (!isXApiConfigured()) {
-    return NextResponse.json(
-      {
-        items: [],
-        errors: [
-          'X API non configurée. Ajoutez TWITTER_API_KEY, TWITTER_API_SECRET, TWITTER_ACCESS_TOKEN et TWITTER_ACCESS_SECRET dans les variables d\'environnement Vercel.',
-        ],
-      },
-      { status: 403 }
-    );
+async function scrapeTweets(handle: string, limit: number): Promise<FetchedItem[]> {
+  const cleanHandle = handle.replace(/^@/, '');
+  const url = `https://syndication.twitter.com/srv/timeline-profile/screen-name/${cleanHandle}?showReplies=false`;
+
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    },
+    signal: AbortSignal.timeout(10000),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Erreur HTTP ${res.status} pour @${cleanHandle}`);
   }
 
+  const html = await res.text();
+
+  // Extract __NEXT_DATA__ JSON
+  const jsonMatch = html.match(
+    /<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/
+  );
+
+  if (!jsonMatch?.[1]) {
+    throw new Error(`Impossible de parser les tweets de @${cleanHandle}`);
+  }
+
+  const data: SyndicationData = JSON.parse(jsonMatch[1]);
+  const entries = data.props?.pageProps?.timeline?.entries ?? [];
+
+  const items: FetchedItem[] = [];
+
+  for (const entry of entries) {
+    if (entry.type !== 'tweet') continue;
+
+    const tweet = entry.content?.tweet;
+    if (!tweet?.text || !tweet?.id_str) continue;
+
+    const suggestions = generateReplies(tweet.text, tweet.user?.screen_name ?? cleanHandle);
+
+    items.push({
+      id: `eng_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      author: tweet.user?.name ?? cleanHandle,
+      handle: tweet.user?.screen_name ?? cleanHandle,
+      tweet_text: tweet.text,
+      tweet_url: `https://x.com/${tweet.user?.screen_name ?? cleanHandle}/status/${tweet.id_str}`,
+      tweet_id: tweet.id_str,
+      suggestions,
+      created_at: tweet.created_at,
+      metrics: {
+        likes: tweet.favorite_count ?? 0,
+        replies: tweet.reply_count ?? 0,
+        retweets: tweet.retweet_count ?? 0,
+      },
+    });
+
+    if (items.length >= limit) break;
+  }
+
+  return items;
+}
+
+// ── Route handler ──
+
+export async function POST(request: Request) {
   try {
     const body = await request.json();
     const handles: string[] = Array.isArray(body.handles) ? body.handles : [];
     const seenIds: string[] = Array.isArray(body.seen_ids) ? body.seen_ids : [];
+    const perAccount: number = typeof body.per_account === 'number' ? body.per_account : 5;
     const seenSet = new Set(seenIds);
 
     if (handles.length === 0) {
@@ -39,41 +128,21 @@ export async function POST(request: Request) {
       );
     }
 
-    const items: FetchedItem[] = [];
+    const allItems: FetchedItem[] = [];
     const errors: string[] = [];
 
-    for (const handle of handles.slice(0, 15)) {
+    for (const handle of handles.slice(0, 20)) {
       try {
-        const result = await fetchUserTimeline(handle, 5);
-
-        for (const tweet of result.tweets) {
-          if (seenSet.has(tweet.id)) continue;
-
-          const suggestions = generateReplies(tweet.text, result.author.username);
-          items.push({
-            id: `eng_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-            author: result.author.name,
-            handle: result.author.username,
-            tweet_text: tweet.text,
-            tweet_url: `https://x.com/${result.author.username}/status/${tweet.id}`,
-            tweet_id: tweet.id,
-            suggestions,
-            created_at: tweet.created_at,
-          });
-        }
+        const tweets = await scrapeTweets(handle, perAccount + seenIds.length);
+        const fresh = tweets.filter((t) => !seenSet.has(t.tweet_id)).slice(0, perAccount);
+        allItems.push(...fresh);
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : 'erreur inconnue';
-        if (msg.includes('403') || msg.includes('not permitted') || msg.includes('Forbidden')) {
-          errors.push(
-            'Accès refusé : ton plan API X ne permet pas de lire les timelines. Le plan Basic ($100/mois sur developer.x.com) est requis pour la lecture automatique.'
-          );
-          break;
-        }
         errors.push(`@${handle.replace(/^@/, '')}: ${msg}`);
       }
     }
 
-    return NextResponse.json({ items, errors });
+    return NextResponse.json({ items: allItems, errors });
   } catch {
     return NextResponse.json(
       { items: [], errors: ['Requête invalide'] },
