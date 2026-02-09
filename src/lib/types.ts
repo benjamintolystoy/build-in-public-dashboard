@@ -65,6 +65,16 @@ export type PromotedData = {
   total_impressions_from_promoted: number;
 };
 
+export type EngageItem = {
+  id: string;
+  author: string;
+  tweet_text: string;
+  tweet_url: string;
+  suggestions: string[];
+  status: 'pending' | 'done' | 'skipped';
+  created_at: string;
+};
+
 export type JournalEntry = {
   id: string;
   content: string;

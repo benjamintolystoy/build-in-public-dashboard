@@ -7,7 +7,7 @@ const NAV_ITEMS = [
   { href: '/journal', label: 'Journal', icon: '✎' },
   { href: '/tweets', label: 'Tweets', icon: '✦' },
   { href: '/engagement', label: 'Engagement', icon: '⚡' },
-  { href: '/influencers', label: 'Influencers', icon: '◉' },
+  { href: '/influencers', label: 'Engage', icon: '💬' },
   { href: '/promoted', label: 'Promoted', icon: '▲' },
 ];
 
