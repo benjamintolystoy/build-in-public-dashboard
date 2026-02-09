@@ -1,3 +1,4 @@
+'use client';
 import { Tweet, STYLE_COLORS, TweetStyle } from '@/lib/types';
 
 export default function TweetCard({ tweet }: { tweet: Tweet }) {

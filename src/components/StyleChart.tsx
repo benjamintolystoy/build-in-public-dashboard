@@ -2,11 +2,11 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { STYLE_COLORS, TweetStyle } from '@/lib/types';
 
-interface StyleChartProps {
+type Props = {
   data: Record<string, number>;
-}
+};
 
-export default function StyleChart({ data }: StyleChartProps) {
+export default function StyleChart({ data }: Props) {
   const chartData = Object.entries(data).map(([style, score]) => ({
     style,
     score: Math.round(score * 10) / 10,

@@ -1,14 +1,14 @@
 export type TweetStyle = 'levelsio' | 'builder' | 'hype' | 'tactical' | 'reflective';
 
-export interface TweetMetrics {
+export type TweetMetrics = {
   likes: number;
   retweets: number;
   replies: number;
   impressions: number;
   quotes: number;
-}
+};
 
-export interface Tweet {
+export type Tweet = {
   tweet_id: string;
   text: string;
   style: TweetStyle;
@@ -16,37 +16,37 @@ export interface Tweet {
   posted_at: string;
   metrics: TweetMetrics | null;
   metrics_fetched_at: string | null;
-}
+};
 
-export interface EngagementData {
+export type EngagementData = {
   tweets: Tweet[];
   day_counter: number;
   style_scores: Record<string, number>;
-}
+};
 
-export interface Interaction {
+export type Interaction = {
   tweet_id: string;
   action: 'like' | 'reply';
   details: string;
   timestamp: string;
-}
+};
 
-export interface InfluencerProfile {
+export type InfluencerProfile = {
   user_id: string;
   username: string;
   followers: number;
   description: string;
   why: string;
   resolved_at: string;
-}
+};
 
-export interface InfluencerData {
+export type InfluencerData = {
   influencers: Record<string, InfluencerProfile>;
-  interactions: any[];
+  interactions: unknown[];
   last_check: string | null;
-}
+};
 
-export interface PromotedTweet {
+export type PromotedTweet = {
   tweet_id: string;
   budget: number;
   style: string;
@@ -56,22 +56,22 @@ export interface PromotedTweet {
   final_metrics: TweetMetrics | null;
   status: 'active' | 'completed';
   completed_at?: string;
-}
+};
 
-export interface PromotedData {
+export type PromotedData = {
   promoted_tweets: PromotedTweet[];
-  evaluations: any[];
+  evaluations: unknown[];
   budget_spent: number;
   total_impressions_from_promoted: number;
-}
+};
 
-export interface DashboardData {
+export type DashboardData = {
   engagement: EngagementData;
   interactions: Interaction[];
   influencers: InfluencerData;
   promoted: PromotedData;
   synced_at: string;
-}
+};
 
 export const STYLE_COLORS: Record<TweetStyle, string> = {
   levelsio: '#3b82f6',

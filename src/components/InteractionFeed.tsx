@@ -1,3 +1,4 @@
+'use client';
 import { Interaction } from '@/lib/types';
 
 export default function InteractionFeed({ interactions }: { interactions: Interaction[] }) {
