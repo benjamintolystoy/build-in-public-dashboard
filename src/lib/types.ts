@@ -68,8 +68,10 @@ export type PromotedData = {
 export type EngageItem = {
   id: string;
   author: string;
+  handle: string;
   tweet_text: string;
   tweet_url: string;
+  tweet_id: string;
   suggestions: string[];
   status: 'pending' | 'done' | 'skipped';
   created_at: string;
